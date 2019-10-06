@@ -15,6 +15,7 @@
 // 
 // Revision:
 // Revision 0.01 - File Created
+// Revision 0.02 - Add "Operand Forwarding" 
 // Additional Comments:
 //   id is combinational logic @ pipeline Stage 2
 //   3 types of instruction:
@@ -22,6 +23,13 @@
 //     1) R-type:      op   |    rs    |    rt    |   rd     |    sa   |  func
 //     2) I-type:      op   |    rs    |    rt    |        immediate(16)
 //     3) J-type:      op   |                    address(26)
+//
+//   Operand Forwarding
+//   We send the result of the calculation directly from the generation (ex/mem)
+//   to id to avoid RAW problems and pipeline stall.
+//   CHANGES:
+//     1. add input ex_reg_wr_en, ex_reg_wr_addr, ex_reg_wr_data
+//     2. add input mem_reg_wr_en, mem_reg_wr_addr, mem_reg_wr_data
 //////////////////////////////////////////////////////////////////////////////////
 
 `include "defines.v"
@@ -32,6 +40,12 @@ module id(
     input wire [`InstBus-1:0]     inst,
     input wire [`RegBus-1:0]      reg_1_rd_data,
     input wire [`RegBus-1:0]      reg_2_rd_data,
+    input wire                    ex_reg_wr_en,  //directly from ex output
+    input wire [`RegAddrBus-1:0]  ex_reg_wr_addr, 
+    input wire [`RegBus-1:0]      ex_reg_wr_data,
+    input wire                    mem_reg_wr_en, //directly from mem output
+    input wire [`RegAddrBus-1:0]  mem_reg_wr_addr,
+    input wire [`RegBus-1:0]      mem_reg_wr_data,
     output reg                    reg_wr_en,
     output reg [`RegAddrBus-1:0]  reg_wr_addr,
     output reg                    reg_1_rd_en,
@@ -111,6 +125,14 @@ module id(
     always @(*) begin
         if (rst == `RstEnable) begin
             reg1 = `ZeroWord;
+        end else if (reg_1_rd_en == `ReadEnable && ex_reg_wr_en == `WriteEnable
+                        && reg_1_rd_addr == ex_reg_wr_addr) begin
+            // If reg to be written by ex is the same as reg to be read by reg1
+            reg1 = ex_reg_wr_data; 
+        end else if (reg_1_rd_en == `ReadEnable && mem_reg_wr_en == `WriteEnable
+                        && reg_1_rd_addr == mem_reg_wr_addr) begin
+            // If reg to be written by mem is the same as reg to be read by reg1
+            reg1 = mem_reg_wr_data; 
         end else if (reg_1_rd_en == `ReadEnable) begin
             //if rd active, sent reg_1_rd_data to reg1
             reg1 = reg_1_rd_data;
@@ -122,10 +144,33 @@ module id(
         end
     end // always
 
+    // /*Get data stored in reg_1*/
+    // always @(*) begin
+    //     if (rst == `RstEnable) begin
+    //         reg1 = `ZeroWord;
+    //     end else if (reg_1_rd_en == `ReadEnable) begin
+    //         //if rd active, sent reg_1_rd_data to reg1
+    //         reg1 = reg_1_rd_data;
+    //     end else if (reg_1_rd_en == `ReadDisable) begin
+    //         //if rd inactive, sent imme to reg1
+    //         reg1 = imme;
+    //     end else begin
+    //         reg1 = `ZeroWord;
+    //     end
+    // end // always
+
     /*Get data stored in reg_2*/
     always @(*) begin
         if (rst == `RstEnable) begin
             reg2 = `ZeroWord;
+        end else if (reg_2_rd_en == `ReadEnable && ex_reg_wr_en == `WriteEnable
+                        && reg_2_rd_addr == ex_reg_wr_addr) begin
+            // If reg to be written by ex is the same as reg to be read by reg2
+            reg2 = ex_reg_wr_data; 
+        end else if (reg_2_rd_en == `ReadEnable && mem_reg_wr_en == `WriteEnable
+                        && reg_2_rd_addr == mem_reg_wr_addr) begin
+            // If reg to be written by mem is the same as reg to be read by reg2
+            reg2 = mem_reg_wr_data; 
         end else if (reg_2_rd_en == `ReadEnable) begin
             //if rd active, sent reg_2_rd_data to reg2
             reg2 = reg_2_rd_data;
@@ -134,8 +179,22 @@ module id(
             reg2 = imme;
         end else begin
             reg2 = `ZeroWord;
-        end 
+        end
     end // always
+
+    // always @(*) begin
+    //     if (rst == `RstEnable) begin
+    //         reg2 = `ZeroWord;
+    //     end else if (reg_2_rd_en == `ReadEnable) begin
+    //         //if rd active, sent reg_2_rd_data to reg2
+    //         reg2 = reg_2_rd_data;
+    //     end else if (reg_2_rd_en == `ReadDisable) begin
+    //         //if rd inactive, sent imme to reg2
+    //         reg2 = imme;
+    //     end else begin
+    //         reg2 = `ZeroWord;
+    //     end 
+    // end // always
 
 
 endmodule

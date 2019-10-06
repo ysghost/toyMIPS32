@@ -33,10 +33,14 @@ module inst_rom(
     //initial $readmemh ( "inst_rom.data", instruction_rom );
 
     initial begin
+        // instruction_rom[0] = `InstBus'h34011100;
+        // instruction_rom[1] = `InstBus'h34020020;
+        // instruction_rom[2] = `InstBus'h3403ff00;
+        // instruction_rom[3] = `InstBus'h3404ffff;
         instruction_rom[0] = `InstBus'h34011100;
-        instruction_rom[1] = `InstBus'h34020020;
-        instruction_rom[2] = `InstBus'h3403ff00;
-        instruction_rom[3] = `InstBus'h3404ffff;
+        instruction_rom[1] = `InstBus'h34210020;
+        instruction_rom[2] = `InstBus'h34214400;
+        instruction_rom[3] = `InstBus'h34210044;
     end
 
 

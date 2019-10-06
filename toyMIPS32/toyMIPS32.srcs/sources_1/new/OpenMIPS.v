@@ -121,23 +121,49 @@ module OpenMIPS(
 
     //id
     id  u_id (
-        .rst                     ( rst                     ),
-        .pc                      ( if_2_id_pc              ),
-        .inst                    ( if_2_id_inst            ),
-        .reg_1_rd_data           ( rd_1_data               ),
-        .reg_2_rd_data           ( rd_2_data               ),
+        .rst                     ( rst                        ),
+        .pc                      ( if_2_id_pc                 ),
+        .inst                    ( if_2_id_inst               ),
+        .reg_1_rd_data           ( rd_1_data                  ),
+        .reg_2_rd_data           ( rd_2_data                  ),
+        .ex_reg_wr_en            ( ex_2_ex_mem_reg_wr_en      ),
+        .ex_reg_wr_addr          ( ex_2_ex_mem_reg_wr_addr    ),
+        .ex_reg_wr_data          ( ex_2_ex_mem_reg_wr_data    ),
+        .mem_reg_wr_en           ( mem_2_mem_wb_reg_wr_en     ),
+        .mem_reg_wr_addr         ( mem_2_mem_wb_reg_wr_addr   ),
+        .mem_reg_wr_data         ( mem_2_mem_wb_reg_wr_data   ),
 
-        .reg_wr_en               ( id_2_id_ex_reg_wr_en    ),  
-        .reg_wr_addr             ( id_2_id_ex_reg_wr_addr  ),
-        .reg_1_rd_en             ( reg_1_rd_en             ),
-        .reg_2_rd_en             ( reg_2_rd_en             ),
-        .reg_1_rd_addr           ( reg_1_rd_addr           ),
-        .reg_2_rd_addr           ( reg_2_rd_addr           ),
-        .reg1                    ( id_2_id_ex_reg1         ),
-        .reg2                    ( id_2_id_ex_reg2         ),
-        .alu_op                  ( id_2_id_ex_alu_op       ),
-        .alu_sel                 ( id_2_id_ex_alu_sel      )
+        .reg_wr_en               ( id_2_id_ex_reg_wr_en       ),
+        .reg_wr_addr             ( id_2_id_ex_reg_wr_addr     ),
+        .reg_1_rd_en             ( reg_1_rd_en                ),
+        .reg_2_rd_en             ( reg_2_rd_en                ),
+        .reg_1_rd_addr           ( reg_1_rd_addr              ),
+        .reg_2_rd_addr           ( reg_2_rd_addr              ),
+        .reg1                    ( id_2_id_ex_reg1            ),
+        .reg2                    ( id_2_id_ex_reg2            ),
+        .alu_op                  ( id_2_id_ex_alu_op          ),
+        .alu_sel                 ( id_2_id_ex_alu_sel         )
     );
+
+
+    // id  u_id (
+    //     .rst                     ( rst                     ),
+    //     .pc                      ( if_2_id_pc              ),
+    //     .inst                    ( if_2_id_inst            ),
+    //     .reg_1_rd_data           ( rd_1_data               ),
+    //     .reg_2_rd_data           ( rd_2_data               ),
+
+    //     .reg_wr_en               ( id_2_id_ex_reg_wr_en    ),  
+    //     .reg_wr_addr             ( id_2_id_ex_reg_wr_addr  ),
+    //     .reg_1_rd_en             ( reg_1_rd_en             ),
+    //     .reg_2_rd_en             ( reg_2_rd_en             ),
+    //     .reg_1_rd_addr           ( reg_1_rd_addr           ),
+    //     .reg_2_rd_addr           ( reg_2_rd_addr           ),
+    //     .reg1                    ( id_2_id_ex_reg1         ),
+    //     .reg2                    ( id_2_id_ex_reg2         ),
+    //     .alu_op                  ( id_2_id_ex_alu_op       ),
+    //     .alu_sel                 ( id_2_id_ex_alu_sel      )
+    // );
 
     //regfile
     regfile  u_regfile (
