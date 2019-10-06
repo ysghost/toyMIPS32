@@ -34,6 +34,11 @@
 //   CHANGES:
 //     1. add input ex_reg_wr_en, ex_reg_wr_addr, ex_reg_wr_data
 //     2. add input mem_reg_wr_en, mem_reg_wr_addr, mem_reg_wr_data
+//
+// Revision 0.03:
+//    Add AND, OR, XOR, NOR, ANDI, ORI, XORI, LUI,
+//        SLL, SLLV, SRL, SRLV, SRA, SRAV, SYNC
+//    Fix bug: imme
 //////////////////////////////////////////////////////////////////////////////////
 
 `include "defines.v"
@@ -216,7 +221,7 @@ module id(
                             reg_2_rd_addr = rt               ;
                             alu_op        = `EXE_SLL_OP      ;
                             alu_sel       = `EXE_RES_SHIFT   ;
-                            imme          = sa               ;// imme = sa                                  
+                            imme          = {27'h0, sa}      ;// imme = sa                                  
                         end // `EXE_SLL
                         `EXE_SRL: begin // rd <- rt >> sa (LOGIC SHIFT)
                             inst_valid    = `InstValid       ;
@@ -228,7 +233,7 @@ module id(
                             reg_2_rd_addr = rt               ;
                             alu_op        = `EXE_SRL_OP      ;
                             alu_sel       = `EXE_RES_SHIFT   ;
-                            imme          = sa               ;// imme = sa                                  
+                            imme          = {27'h0, sa}      ;// imme = sa                                   
                         end // `EXE_SRL
                         `EXE_SRA: begin // rd <- rt >> sa (ARITH SHIFT)
                             inst_valid    = `InstValid       ;
@@ -240,7 +245,7 @@ module id(
                             reg_2_rd_addr = rt               ;
                             alu_op        = `EXE_SRA_OP      ;
                             alu_sel       = `EXE_RES_SHIFT   ;
-                            imme          = sa               ;// imme = sa                                  
+                            imme          = {27'h0, sa}      ;// imme = sa                                   
                         end // `EXE_SRA
 
                         default: begin
@@ -271,7 +276,7 @@ module id(
                     alu_sel       = `EXE_RES_LOGIC     ;
                     imme          = {16'h0, immediate} ;         
                 end //`EXE_ANDI
-                `EXE_XORI_OP: begin // rt = rs ^ imme
+                `EXE_XORI: begin // rt = rs ^ imme
                     inst_valid    = `InstValid         ;
                     reg_wr_en     = `WriteEnable       ;
                     reg_wr_addr   = rt                 ;
@@ -282,7 +287,7 @@ module id(
                     alu_op        = `EXE_XORI_OP       ;//FIX
                     alu_sel       = `EXE_RES_LOGIC     ;
                     imme          = {16'h0, immediate} ;         
-                end //`EXE_XORI_OP
+                end //`EXE_XORI
                 `EXE_LUI: begin // rt = (imme << 16), lower 16 bits are zeroes
                     inst_valid    = `InstValid         ;
                     reg_wr_en     = `WriteEnable       ;
