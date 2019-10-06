@@ -16,7 +16,10 @@
 // Revision:
 // Revision 0.01 - File Created
 // Revision 0.02 - Add "Operand Forwarding" 
+// Revision 0.03 - Add AND, OR, XOR, NOR, ANDI, ORI, XORI, LUI,
+//                     SLL, SLLV, SRL, SRLV, SRA, SRAV, SYNC
 // Additional Comments:
+// Revision 0.01:
 //   id is combinational logic @ pipeline Stage 2
 //   3 types of instruction:
 //                 31-26(6) | 25-21(5) | 20-16(5) | 15-11(5) | 10-6(5) | 5-0(6)
@@ -24,6 +27,7 @@
 //     2) I-type:      op   |    rs    |    rt    |        immediate(16)
 //     3) J-type:      op   |                    address(26)
 //
+// Revision 0.02:
 //   Operand Forwarding
 //   We send the result of the calculation directly from the generation (ex/mem)
 //   to id to avoid RAW problems and pipeline stall.
@@ -58,7 +62,7 @@ module id(
     output reg [`AluSelBus-1:0]   alu_sel
     );
 
-    //instruction
+    //instruction global
     wire [5:0] op = inst[31:26];
     wire [4:0] rs = inst[25:21];
     wire [4:0] rt = inst[20:16];
@@ -96,7 +100,7 @@ module id(
             reg_wr_en           = `WriteDisable     ;
             reg_wr_addr         = rt                ;
             reg_1_rd_en         = `ReadDisable      ;
-            reg_1_rd_addr       = rs                ;            
+            reg_1_rd_addr       = rs                ;
             reg_2_rd_en         = `ReadDisable      ;
             reg_2_rd_addr       = rt                ;
             alu_op              = `EXE_NOP_OP       ;
@@ -104,16 +108,196 @@ module id(
             imme                = `ZeroWord         ;
 
             case (op)
-                `EXE_ORI: begin
-                    reg_wr_en           = `WriteEnable      ;
-                    reg_wr_addr         = rt                ;
-                    reg_1_rd_en         = `ReadEnable       ;
-                    reg_1_rd_addr       = rs                ;
-                    reg_2_rd_en         = `ReadDisable      ;           
-                    alu_op              = `EXE_ORI_OP       ;//FIX
-                    alu_sel             = `EXE_RES_LOGIC    ;
-                    imme                = {16'h0, immediate};         
+                `EXE_SPECIAL_INST: begin // op=6'b000000 SPECIAL INSTUCTION
+                    case (func)
+                        `EXE_AND: begin // rd <- rs AND rt (LOGIC)
+                            inst_valid    = `InstValid       ;
+                            reg_wr_en     = `WriteEnable     ;
+                            reg_wr_addr   = rd               ;
+                            reg_1_rd_en   = `ReadEnable      ;
+                            reg_1_rd_addr = rs               ;            
+                            reg_2_rd_en   = `ReadEnable      ;
+                            reg_2_rd_addr = rt               ;
+                            alu_op        = `EXE_AND_OP      ;
+                            alu_sel       = `EXE_RES_LOGIC   ;
+                            imme          = `ZeroWord        ;
+                        end //`EXE_AND
+                        `EXE_OR : begin // rd <- rs OR rt (LOGIC)
+                            inst_valid    = `InstValid       ;
+                            reg_wr_en     = `WriteEnable     ;
+                            reg_wr_addr   = rd               ;
+                            reg_1_rd_en   = `ReadEnable      ;
+                            reg_1_rd_addr = rs               ;
+                            reg_2_rd_en   = `ReadEnable      ;
+                            reg_2_rd_addr = rt               ;
+                            alu_op        = `EXE_OR_OP       ;
+                            alu_sel       = `EXE_RES_LOGIC   ;
+                            imme          = `ZeroWord        ;                               
+                        end // `EXE_OR
+                        `EXE_XOR: begin // rd <- rs XOR rt (LOGIC)
+                            inst_valid    = `InstValid       ;
+                            reg_wr_en     = `WriteEnable     ;
+                            reg_wr_addr   = rd               ;
+                            reg_1_rd_en   = `ReadEnable      ;
+                            reg_1_rd_addr = rs               ;
+                            reg_2_rd_en   = `ReadEnable      ;
+                            reg_2_rd_addr = rt               ;
+                            alu_op        = `EXE_XOR_OP      ;
+                            alu_sel       = `EXE_RES_LOGIC   ;
+                            imme          = `ZeroWord        ;                                      
+                        end // `EXE_XOR
+                        `EXE_NOR: begin // rd <- rs NOR rt (LOGIC)
+                            inst_valid    = `InstValid       ;
+                            reg_wr_en     = `WriteEnable     ;
+                            reg_wr_addr   = rd               ;
+                            reg_1_rd_en   = `ReadEnable      ;
+                            reg_1_rd_addr = rs               ;
+                            reg_2_rd_en   = `ReadEnable      ;
+                            reg_2_rd_addr = rt               ;
+                            alu_op        = `EXE_NOR_OP      ;
+                            alu_sel       = `EXE_RES_LOGIC   ;
+                            imme          = `ZeroWord        ;                                     
+                        end // `EXE_NOR
+                        `EXE_SLLV: begin // rd <- rt << rs (LOGIC SHIFT)
+                            inst_valid    = `InstValid       ;
+                            reg_wr_en     = `WriteEnable     ;
+                            reg_wr_addr   = rd               ;
+                            reg_1_rd_en   = `ReadEnable      ;
+                            reg_1_rd_addr = rs               ;
+                            reg_2_rd_en   = `ReadEnable      ;
+                            reg_2_rd_addr = rt               ;
+                            alu_op        = `EXE_SLLV_OP     ; //FIX
+                            alu_sel       = `EXE_RES_SHIFT   ;
+                            imme          = `ZeroWord        ;                                     
+                        end // `EXE_SLLV
+                        `EXE_SRLV: begin // rd <- rt >> rs (LOGIC SHIFT)
+                            inst_valid    = `InstValid       ;
+                            reg_wr_en     = `WriteEnable     ;
+                            reg_wr_addr   = rd               ;
+                            reg_1_rd_en   = `ReadEnable      ;
+                            reg_1_rd_addr = rs               ;
+                            reg_2_rd_en   = `ReadEnable      ;
+                            reg_2_rd_addr = rt               ;
+                            alu_op        = `EXE_SRLV_OP     ; //FIX
+                            alu_sel       = `EXE_RES_SHIFT   ;
+                            imme          = `ZeroWord        ;                                     
+                        end // `EXE_SRLV
+                        `EXE_SRAV: begin // rd <- rt >> rs (ARITH SHIFT)
+                            inst_valid    = `InstValid       ;
+                            reg_wr_en     = `WriteEnable     ;
+                            reg_wr_addr   = rd               ;
+                            reg_1_rd_en   = `ReadEnable      ;
+                            reg_1_rd_addr = rs               ;
+                            reg_2_rd_en   = `ReadEnable      ;
+                            reg_2_rd_addr = rt               ;
+                            alu_op        = `EXE_SRAV_OP     ; //FIX
+                            alu_sel       = `EXE_RES_SHIFT   ;
+                            imme          = `ZeroWord        ;                                     
+                        end // `EXE_SRAV
+                        `EXE_SYNC: begin // 
+                            inst_valid      = `InstValid        ;
+                            reg_wr_en       = `WriteDisable     ;
+                            //reg_wr_addr     = rt                ;
+                            reg_1_rd_en     = `ReadDisable      ;
+                            //reg_1_rd_addr   = rs                ;
+                            reg_2_rd_en     = `ReadEnable       ;
+                            reg_2_rd_addr   = rt                ;
+                            alu_op          = `EXE_NOP_OP       ;
+                            alu_sel         = `EXE_RES_NOP      ;
+                            imme            = `ZeroWord         ;                                    
+                        end // `EXE_SYNC
+                        `EXE_SLL: begin // rd <- rt << sa (LOGIC SHIFT)
+                            inst_valid    = `InstValid       ;
+                            reg_wr_en     = `WriteEnable     ;
+                            reg_wr_addr   = rd               ;
+                            reg_1_rd_en   = `ReadDisable     ;
+                            //reg_1_rd_addr = rs               ;// read imme
+                            reg_2_rd_en   = `ReadEnable      ;
+                            reg_2_rd_addr = rt               ;
+                            alu_op        = `EXE_SLL_OP      ;
+                            alu_sel       = `EXE_RES_SHIFT   ;
+                            imme          = sa               ;// imme = sa                                  
+                        end // `EXE_SLL
+                        `EXE_SRL: begin // rd <- rt >> sa (LOGIC SHIFT)
+                            inst_valid    = `InstValid       ;
+                            reg_wr_en     = `WriteEnable     ;
+                            reg_wr_addr   = rd               ;
+                            reg_1_rd_en   = `ReadDisable     ;
+                            //reg_1_rd_addr = rs               ;// read imme
+                            reg_2_rd_en   = `ReadEnable      ;
+                            reg_2_rd_addr = rt               ;
+                            alu_op        = `EXE_SRL_OP      ;
+                            alu_sel       = `EXE_RES_SHIFT   ;
+                            imme          = sa               ;// imme = sa                                  
+                        end // `EXE_SRL
+                        `EXE_SRA: begin // rd <- rt >> sa (ARITH SHIFT)
+                            inst_valid    = `InstValid       ;
+                            reg_wr_en     = `WriteEnable     ;
+                            reg_wr_addr   = rd               ;
+                            reg_1_rd_en   = `ReadDisable     ;
+                            //reg_1_rd_addr = rs               ;// read imme
+                            reg_2_rd_en   = `ReadEnable      ;
+                            reg_2_rd_addr = rt               ;
+                            alu_op        = `EXE_SRA_OP      ;
+                            alu_sel       = `EXE_RES_SHIFT   ;
+                            imme          = sa               ;// imme = sa                                  
+                        end // `EXE_SRA
+
+                        default: begin
+                        end // deafult
+                    endcase // case(func)
+                end // `EXE_SPECIAL_INST
+                `EXE_ORI: begin // rt = rs | imme
+                    inst_valid    = `InstValid         ;
+                    reg_wr_en     = `WriteEnable       ;
+                    reg_wr_addr   = rt                 ;
+                    reg_1_rd_en   = `ReadEnable        ;
+                    reg_1_rd_addr = rs                 ;
+                    reg_2_rd_en   = `ReadDisable       ;// read imme     
+                    //reg_2_rd_addr = rt                 ;      
+                    alu_op        = `EXE_ORI_OP        ;//FIX
+                    alu_sel       = `EXE_RES_LOGIC     ;
+                    imme          = {16'h0, immediate} ;         
                 end //`EXE_ORI
+                `EXE_ANDI: begin // rt = rs & imme
+                    inst_valid    = `InstValid         ;
+                    reg_wr_en     = `WriteEnable       ;
+                    reg_wr_addr   = rt                 ;
+                    reg_1_rd_en   = `ReadEnable        ;
+                    reg_1_rd_addr = rs                 ;
+                    reg_2_rd_en   = `ReadDisable       ;// read imme     
+                    //reg_2_rd_addr = rt                 ;      
+                    alu_op        = `EXE_ANDI_OP       ;//FIX
+                    alu_sel       = `EXE_RES_LOGIC     ;
+                    imme          = {16'h0, immediate} ;         
+                end //`EXE_ANDI
+                `EXE_XORI_OP: begin // rt = rs ^ imme
+                    inst_valid    = `InstValid         ;
+                    reg_wr_en     = `WriteEnable       ;
+                    reg_wr_addr   = rt                 ;
+                    reg_1_rd_en   = `ReadEnable        ;
+                    reg_1_rd_addr = rs                 ;
+                    reg_2_rd_en   = `ReadDisable       ;// read imme     
+                    //reg_2_rd_addr = rt                 ;      
+                    alu_op        = `EXE_XORI_OP       ;//FIX
+                    alu_sel       = `EXE_RES_LOGIC     ;
+                    imme          = {16'h0, immediate} ;         
+                end //`EXE_XORI_OP
+                `EXE_LUI: begin // rt = (imme << 16), lower 16 bits are zeroes
+                    inst_valid    = `InstValid         ;
+                    reg_wr_en     = `WriteEnable       ;
+                    reg_wr_addr   = rt                 ;
+                    reg_1_rd_en   = `ReadEnable        ;
+                    //reg_1_rd_addr = rs                 ;// donot care
+                    reg_2_rd_en   = `ReadDisable       ;// read imme     
+                    //reg_2_rd_addr = rt                 ;      
+                    alu_op        = `EXE_OR_OP         ;//FIX
+                    alu_sel       = `EXE_RES_LOGIC     ;
+                    imme          = {immediate, 16'h0} ;         
+                end //`EXE_LUI
+
+                //`EXE_PREF
+
                 default: begin               
                 
                 end //default
