@@ -32,18 +32,57 @@ module inst_rom(
 
     //initial $readmemh ( "inst_rom.data", instruction_rom );
 
+    // initial begin
+    //     // instruction_rom[0] = `InstBus'h34011100;
+    //     // instruction_rom[1] = `InstBus'h34020020;
+    //     // instruction_rom[2] = `InstBus'h3403ff00;
+    //     // instruction_rom[3] = `InstBus'h3404ffff;
+    //     instruction_rom[0] = `InstBus'h34011100;
+    //     instruction_rom[1] = `InstBus'h34210020;
+    //     instruction_rom[2] = `InstBus'h34214400;
+    //     instruction_rom[3] = `InstBus'h34210044;
+    // end
+
+    // // logic test
+    // initial begin
+    //     instruction_rom[0] = `InstBus'h3c010101;
+    //     instruction_rom[1] = `InstBus'h34210101;
+    //     instruction_rom[2] = `InstBus'h34221100;
+    //     instruction_rom[3] = `InstBus'h00220825;
+    //     instruction_rom[4] = `InstBus'h302300fe;
+    //     instruction_rom[5] = `InstBus'h00610824;
+    //     instruction_rom[6] = `InstBus'h3824ff00;
+    //     instruction_rom[7] = `InstBus'h00810826;
+    //     instruction_rom[8] = `InstBus'h00810827;
+    // end
+
+    // shift test
     initial begin
-        // instruction_rom[0] = `InstBus'h34011100;
-        // instruction_rom[1] = `InstBus'h34020020;
-        // instruction_rom[2] = `InstBus'h3403ff00;
-        // instruction_rom[3] = `InstBus'h3404ffff;
-        instruction_rom[0] = `InstBus'h34011100;
-        instruction_rom[1] = `InstBus'h34210020;
-        instruction_rom[2] = `InstBus'h34214400;
-        instruction_rom[3] = `InstBus'h34210044;
+        //lui	 $v0,0x404     --> $2 = 0x04040000
+        //ori	 $v0,$v0,0x404 --> $2 = 0x04040404
+        //sll	 $v0,$v0,0x8   --> $2 = 0x04040400
+        //ori    $a3,$zero,0x2 --> $7 = 0x00000002
+        //sllv   $v0,$v0,$a3   --> $2 = 0x10101000
+        //srl	 $v0,$v0,0x8   --> $2 = 0x00101010
+        //ori    $a1,$zero,0x3 --> $5 = 0x00000003
+        //srlv   $v0,$v0,$a1   --> $2 = 0x00020202
+        //sll	 $v0,$v0,0xe   --> $2 = 0x80808000
+        //sra	 $v0,$v0,0x4   --> $2 = 0xf8080800
+        //ori    $t0,$zero,0x8 --> $8 = 0x00000008
+        //srav   $v0,$v0,$t0   --> $2 = 0xfff80808
+        instruction_rom[0]  = `InstBus'h3c020404;//lui	 $v0,0x404    
+        instruction_rom[1]  = `InstBus'h34420404;//ori	 $v0,$v0,0x404
+        instruction_rom[2]  = `InstBus'h00021200;//sll	 $v0,$v0,0x8  
+        instruction_rom[3]  = `InstBus'h34070002;//ori   $a3,$zero,0x2
+        instruction_rom[4]  = `InstBus'h00e21004;//sllv  $v0,$v0,$a3  
+        instruction_rom[5]  = `InstBus'h00021202;//srl	 $v0,$v0,0x8  
+        instruction_rom[6]  = `InstBus'h34050003;//ori   $a1,$zero,0x3
+        instruction_rom[7]  = `InstBus'h00a21006;//srlv  $v0,$v0,$a1  
+        instruction_rom[8]  = `InstBus'h00021380;//sll	 $v0,$v0,0xe  
+        instruction_rom[9]  = `InstBus'h00021103;//sra	 $v0,$v0,0x4  
+        instruction_rom[10] = `InstBus'h34080008;//ori   $t0,$zero,0x8
+        instruction_rom[11] = `InstBus'h01021007;//srav  $v0,$v0,$t0  
     end
-
-
 
     always @(*) begin
         if (chip_enable == `ChipDisable) begin
