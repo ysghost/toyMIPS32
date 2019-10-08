@@ -18,6 +18,8 @@
 // Revision 0.02 - Add "Operand Forwarding" 
 // Revision 0.03 - Add AND, OR, XOR, NOR, ANDI, ORI, XORI, LUI,
 //                     SLL, SLLV, SRL, SRLV, SRA, SRAV, SYNC
+// Revision 0.04 - Add MOVZ, MOVN, MFHI, MTHI, MFLO, MTLO
+//
 // Additional Comments:
 // Revision 0.01:
 //   id is combinational logic @ pipeline Stage 2
@@ -39,6 +41,9 @@
 //    Add AND, OR, XOR, NOR, ANDI, ORI, XORI, LUI,
 //        SLL, SLLV, SRL, SRLV, SRA, SRAV, SYNC
 //    Fix bug: imme
+//
+// Revision 0.04:
+//    Add MOVZ, MOVN, MFHI, MTHI, MFLO, MTLO
 //////////////////////////////////////////////////////////////////////////////////
 
 `include "defines.v"
@@ -93,7 +98,7 @@ module id(
             reg_wr_en           = `WriteDisable     ;
             reg_wr_addr         = `NOPRegAddr       ;
             reg_1_rd_en         = `ReadDisable      ;
-            reg_1_rd_addr       = `NOPRegAddr       ;            
+            reg_1_rd_addr       = `NOPRegAddr       ; 
             reg_2_rd_en         = `ReadDisable      ;
             reg_2_rd_addr       = `NOPRegAddr       ;
             alu_op              = `EXE_NOP_OP       ;
@@ -137,7 +142,7 @@ module id(
                             reg_2_rd_addr = rt               ;
                             alu_op        = `EXE_OR_OP       ;
                             alu_sel       = `EXE_RES_LOGIC   ;
-                            imme          = `ZeroWord        ;                               
+                            imme          = `ZeroWord        ; 
                         end // `EXE_OR
                         `EXE_XOR: begin // rd <- rs XOR rt (LOGIC)
                             inst_valid    = `InstValid       ;
@@ -149,7 +154,7 @@ module id(
                             reg_2_rd_addr = rt               ;
                             alu_op        = `EXE_XOR_OP      ;
                             alu_sel       = `EXE_RES_LOGIC   ;
-                            imme          = `ZeroWord        ;                                      
+                            imme          = `ZeroWord        ;
                         end // `EXE_XOR
                         `EXE_NOR: begin // rd <- rs NOR rt (LOGIC)
                             inst_valid    = `InstValid       ;
@@ -161,7 +166,7 @@ module id(
                             reg_2_rd_addr = rt               ;
                             alu_op        = `EXE_NOR_OP      ;
                             alu_sel       = `EXE_RES_LOGIC   ;
-                            imme          = `ZeroWord        ;                                     
+                            imme          = `ZeroWord        ; 
                         end // `EXE_NOR
                         `EXE_SLLV: begin // rd <- rt << rs (LOGIC SHIFT)
                             inst_valid    = `InstValid       ;
@@ -173,7 +178,7 @@ module id(
                             reg_2_rd_addr = rt               ;
                             alu_op        = `EXE_SLLV_OP     ; //FIX
                             alu_sel       = `EXE_RES_SHIFT   ;
-                            imme          = `ZeroWord        ;                                     
+                            imme          = `ZeroWord        ; 
                         end // `EXE_SLLV
                         `EXE_SRLV: begin // rd <- rt >> rs (LOGIC SHIFT)
                             inst_valid    = `InstValid       ;
@@ -185,7 +190,7 @@ module id(
                             reg_2_rd_addr = rt               ;
                             alu_op        = `EXE_SRLV_OP     ; //FIX
                             alu_sel       = `EXE_RES_SHIFT   ;
-                            imme          = `ZeroWord        ;                                     
+                            imme          = `ZeroWord        ; 
                         end // `EXE_SRLV
                         `EXE_SRAV: begin // rd <- rt >> rs (ARITH SHIFT)
                             inst_valid    = `InstValid       ;
@@ -197,7 +202,7 @@ module id(
                             reg_2_rd_addr = rt               ;
                             alu_op        = `EXE_SRAV_OP     ; //FIX
                             alu_sel       = `EXE_RES_SHIFT   ;
-                            imme          = `ZeroWord        ;                                     
+                            imme          = `ZeroWord        ;  
                         end // `EXE_SRAV
                         `EXE_SYNC: begin // 
                             inst_valid      = `InstValid        ;
@@ -209,7 +214,7 @@ module id(
                             reg_2_rd_addr   = rt                ;
                             alu_op          = `EXE_NOP_OP       ;
                             alu_sel         = `EXE_RES_NOP      ;
-                            imme            = `ZeroWord         ;                                    
+                            imme            = `ZeroWord         ;
                         end // `EXE_SYNC
                         `EXE_SLL: begin // rd <- rt << sa (LOGIC SHIFT)
                             inst_valid    = `InstValid       ;
@@ -221,7 +226,7 @@ module id(
                             reg_2_rd_addr = rt               ;
                             alu_op        = `EXE_SLL_OP      ;
                             alu_sel       = `EXE_RES_SHIFT   ;
-                            imme          = {27'h0, sa}      ;// imme = sa                                  
+                            imme          = {27'h0, sa}      ;// imme = sa
                         end // `EXE_SLL
                         `EXE_SRL: begin // rd <- rt >> sa (LOGIC SHIFT)
                             inst_valid    = `InstValid       ;
@@ -233,7 +238,7 @@ module id(
                             reg_2_rd_addr = rt               ;
                             alu_op        = `EXE_SRL_OP      ;
                             alu_sel       = `EXE_RES_SHIFT   ;
-                            imme          = {27'h0, sa}      ;// imme = sa                                   
+                            imme          = {27'h0, sa}      ;// imme = sa
                         end // `EXE_SRL
                         `EXE_SRA: begin // rd <- rt >> sa (ARITH SHIFT)
                             inst_valid    = `InstValid       ;
@@ -245,8 +250,88 @@ module id(
                             reg_2_rd_addr = rt               ;
                             alu_op        = `EXE_SRA_OP      ;
                             alu_sel       = `EXE_RES_SHIFT   ;
-                            imme          = {27'h0, sa}      ;// imme = sa                                   
+                            imme          = {27'h0, sa}      ;// imme = sa
                         end // `EXE_SRA
+                        `EXE_MOVZ: begin // if rt == 0 then rd <- rs
+                            inst_valid    = `InstValid       ;
+                            reg_1_rd_en   = `ReadEnable      ;
+                            reg_1_rd_addr = rs               ;
+                            reg_2_rd_en   = `ReadEnable      ;
+                            reg_2_rd_addr = rt               ;                 
+                            if (reg2 == `ZeroWord) begin // if reg2(rt) == 0 
+                                reg_wr_en     = `WriteEnable ;//write rd
+                            end else begin
+                                reg_wr_en     = `WriteDisable;
+                            end
+                            reg_wr_addr   = rd               ;
+                            alu_op        = `EXE_MOVZ_OP     ;
+                            alu_sel       = `EXE_RES_MOVE    ;
+                            imme          = `ZeroWord        ;
+                        end // `EXE_MOVZ
+                        `EXE_MOVN: begin // if rt != 0 then rd <- rs
+                            inst_valid    = `InstValid       ;
+                            reg_1_rd_en   = `ReadEnable      ;
+                            reg_1_rd_addr = rs               ;
+                            reg_2_rd_en   = `ReadEnable      ;
+                            reg_2_rd_addr = rt               ;                 
+                            if (reg2 != `ZeroWord) begin // if reg2(rt) != 0 
+                                reg_wr_en     = `WriteEnable ;//write rd
+                            end else begin
+                                reg_wr_en     = `WriteDisable;
+                            end
+                            reg_wr_addr   = rd               ;
+                            alu_op        = `EXE_MOVN_OP     ;
+                            alu_sel       = `EXE_RES_MOVE    ;
+                            imme          = `ZeroWord        ;
+                        end // `EXE_MOVN
+                        `EXE_MFHI: begin // rd <- hi
+                            inst_valid    = `InstValid       ;
+                            reg_wr_en     = `WriteEnable     ;
+                            reg_wr_addr   = rd               ;
+                            reg_1_rd_en   = `ReadDisable     ;
+                            //reg_1_rd_addr = rs               ;// donot care
+                            reg_2_rd_en   = `ReadDisable     ;
+                            //reg_2_rd_addr = rt               ;// donot care                            
+                            alu_op        = `EXE_MFHI_OP     ;
+                            alu_sel       = `EXE_RES_MOVE    ;
+                            imme          = `ZeroWord        ;
+                        end // `EXE_MFHI
+                        `EXE_MFLO: begin // rd <- lo
+                            inst_valid    = `InstValid       ;
+                            reg_wr_en     = `WriteEnable     ;
+                            reg_wr_addr   = rd               ;
+                            reg_1_rd_en   = `ReadDisable     ;
+                            //reg_1_rd_addr = rs               ;// donot care
+                            reg_2_rd_en   = `ReadDisable     ;
+                            //reg_2_rd_addr = rt               ;// donot care                            
+                            alu_op        = `EXE_MFHI_OP     ;
+                            alu_sel       = `EXE_RES_MOVE    ;
+                            imme          = `ZeroWord        ;
+                        end // `EXE_MFLO
+                        `EXE_MTHI: begin // hi <- rs
+                            inst_valid    = `InstValid       ;
+                            reg_wr_en     = `WriteDisable    ;
+                            //reg_wr_addr   = rs               ;// donot care
+                            reg_1_rd_en   = `ReadEnable      ;
+                            reg_1_rd_addr = rs               ;
+                            reg_2_rd_en   = `ReadDisable     ;
+                            //reg_2_rd_addr = rt               ;// donot care                            
+                            alu_op        = `EXE_MTHI_OP     ;
+                            alu_sel       = `EXE_RES_NOP     ;//not wr to regfile
+                            imme          = `ZeroWord        ;
+                        end // `EXE_MTHI
+                        `EXE_MTLO: begin // lo <- rs
+                            inst_valid    = `InstValid       ;
+                            reg_wr_en     = `WriteDisable    ;
+                            //reg_wr_addr   = rs               ;// donot care
+                            reg_1_rd_en   = `ReadEnable      ;
+                            reg_1_rd_addr = rs               ;
+                            reg_2_rd_en   = `ReadDisable     ;
+                            //reg_2_rd_addr = rt               ;// donot care                            
+                            alu_op        = `EXE_MTLO_OP     ;
+                            alu_sel       = `EXE_RES_NOP     ;//not wr to regfile
+                            imme          = `ZeroWord        ;
+                        end // `EXE_MTLO
 
                         default: begin
                         end // deafult

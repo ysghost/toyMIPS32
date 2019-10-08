@@ -15,6 +15,7 @@
 // 
 // Revision:
 // Revision 0.01 - File Created
+// Revision 0.02 - Add "Operand Forwarding" and hilo_reg
 // Additional Comments:
 // 
 //////////////////////////////////////////////////////////////////////////////////
@@ -69,22 +70,43 @@ module OpenMIPS(
     wire                           ex_2_ex_mem_reg_wr_en;
     wire  [`RegAddrBus-1:0]        ex_2_ex_mem_reg_wr_addr;
     wire  [`RegBus-1:0]            ex_2_ex_mem_reg_wr_data;
+    wire                           ex_2_ex_mem_hilo_wr_en;
+    wire  [`RegBus-1:0]            ex_2_ex_mem_hi_wr_data;
+    wire  [`RegBus-1:0]            ex_2_ex_mem_lo_wr_data;
     
     // ex_mem Outputs   
     wire                           ex_mem_2_mem_reg_wr_en;
     wire  [`RegAddrBus-1:0]        ex_mem_2_mem_reg_wr_addr;
     wire  [`RegBus-1:0]            ex_mem_2_mem_reg_wr_data;
+    wire                           ex_mem_2_mem_hilo_wr_en;
+    wire  [`RegBus-1:0]            ex_mem_2_mem_hi_wr_data;
+    wire  [`RegBus-1:0]            ex_mem_2_mem_lo_wr_data;
     
     // mem Outputs
     wire                           mem_2_mem_wb_reg_wr_en;
     wire  [`RegAddrBus-1:0]        mem_2_mem_wb_reg_wr_addr;
     wire  [`RegBus-1:0]            mem_2_mem_wb_reg_wr_data;
+    wire                           mem_2_mem_wb_hilo_wr_en;
+    wire  [`RegBus-1:0]            mem_2_mem_wb_hi_wr_data;
+    wire  [`RegBus-1:0]            mem_2_mem_wb_lo_wr_data;
+    wire                           mem_bk2_ex_hilo_wr_en;
+    wire  [`RegBus-1:0]            mem_bk2_ex_hi_wr_data;
+    wire  [`RegBus-1:0]            mem_bk2_ex_lo_wr_data;
     
     // mem_wb Outputs  
     wire                           wb_reg_wr_en;
     wire  [`RegAddrBus-1:0]        wb_reg_wr_addr;
     wire  [`RegBus-1:0]            wb_reg_wr_data;
+    wire                           wb_hilo_wr_en;
+    wire  [`RegBus-1:0]            wb_hi_wr_data;
+    wire  [`RegBus-1:0]            wb_lo_wr_data;
+    wire                           wb_bk2_ex_hilo_wr_en;
+    wire  [`RegBus-1:0]            wb_bk2_ex_hi_wr_data;
+    wire  [`RegBus-1:0]            wb_bk2_ex_lo_wr_data;
 
+    // hilo_reg
+    wire  [`RegBus-1:0]            hi_data;
+    wire  [`RegBus-1:0]            lo_data;
 
     ////////////////////////////////////////////////////////////////////////////
     //    instruction fetch                                                 
@@ -106,8 +128,6 @@ module OpenMIPS(
     //    instruction decode                                                
     ////////////////////////////////////////////////////////////////////////////
     
-
-
     //if_id
     if_id  u_if_id (
         .clk                     ( clk            ),
@@ -205,18 +225,44 @@ module OpenMIPS(
     );
 
     //ex
-    ex  u_ex (
-        .rst                     ( rst                         ),
-        .reg_wr_en_i             ( id_ex_2_ex_reg_wr_en        ),
-        .reg_wr_addr_i           ( id_ex_2_ex_reg_wr_addr      ),
-        .reg1                    ( id_ex_2_ex_reg1             ),
-        .reg2                    ( id_ex_2_ex_reg2             ),
-        .alu_op                  ( id_ex_2_ex_alu_op           ),
-        .alu_sel                 ( id_ex_2_ex_alu_sel          ),
+    // ex  u_ex (
+    //     .rst                     ( rst                         ),
+    //     .reg_wr_en_i             ( id_ex_2_ex_reg_wr_en        ),
+    //     .reg_wr_addr_i           ( id_ex_2_ex_reg_wr_addr      ),
+    //     .reg1                    ( id_ex_2_ex_reg1             ),
+    //     .reg2                    ( id_ex_2_ex_reg2             ),
+    //     .alu_op                  ( id_ex_2_ex_alu_op           ),
+    //     .alu_sel                 ( id_ex_2_ex_alu_sel          ),
 
-        .reg_wr_en_o             ( ex_2_ex_mem_reg_wr_en       ),
-        .reg_wr_addr_o           ( ex_2_ex_mem_reg_wr_addr     ),
-        .reg_wr_data_o           ( ex_2_ex_mem_reg_wr_data     )
+    //     .reg_wr_en_o             ( ex_2_ex_mem_reg_wr_en       ),
+    //     .reg_wr_addr_o           ( ex_2_ex_mem_reg_wr_addr     ),
+    //     .reg_wr_data_o           ( ex_2_ex_mem_reg_wr_data     )
+    // );
+
+
+    ex  u_ex (
+        .rst                     ( rst                        ),
+        .reg_wr_en_i             ( id_ex_2_ex_reg_wr_en       ),
+        .reg_wr_addr_i           ( id_ex_2_ex_reg_wr_addr     ),
+        .reg1                    ( id_ex_2_ex_reg1            ),
+        .reg2                    ( id_ex_2_ex_reg2            ),
+        .hi_rd_data              ( hi_data                    ),
+        .lo_rd_data              ( lo_data                    ),
+        .mem_hilo_wr_en          ( mem_bk2_ex_hilo_wr_en      ),
+        .mem_hi_wr_data          ( mem_bk2_ex_hi_wr_data      ),
+        .mem_lo_wr_data          ( mem_bk2_ex_lo_wr_data      ),
+        .wb_hilo_wr_en           ( wb_bk2_ex_hilo_wr_en       ),
+        .wb_hi_wr_data           ( wb_bk2_ex_hi_wr_data       ),
+        .wb_lo_wr_data           ( wb_bk2_ex_lo_wr_data       ),
+        .alu_op                  ( id_ex_2_ex_alu_op          ),
+        .alu_sel                 ( id_ex_2_ex_alu_sel         ),
+
+        .reg_wr_en_o             ( ex_2_ex_mem_reg_wr_en      ),
+        .reg_wr_addr_o           ( ex_2_ex_mem_reg_wr_addr    ),
+        .reg_wr_data_o           ( ex_2_ex_mem_reg_wr_data    ),
+        .hilo_wr_en_o            ( ex_2_ex_mem_hilo_wr_en     ),
+        .hi_wr_data_o            ( ex_2_ex_mem_hi_wr_data     ),
+        .lo_wr_data_o            ( ex_2_ex_mem_lo_wr_data     )
     );
 
     ////////////////////////////////////////////////////////////////////////////
@@ -224,50 +270,123 @@ module OpenMIPS(
     ////////////////////////////////////////////////////////////////////////////
 
     //ex_mem
-    ex_mem  u_ex_mem (
-        .clk                     ( clk                        ),
-        .rst                     ( rst                        ),
-        .ex_reg_wr_en            ( ex_2_ex_mem_reg_wr_en      ),
-        .ex_reg_wr_addr          ( ex_2_ex_mem_reg_wr_addr    ),
-        .ex_reg_wr_data          ( ex_2_ex_mem_reg_wr_data    ),
+    // ex_mem  u_ex_mem (
+    //     .clk                     ( clk                        ),
+    //     .rst                     ( rst                        ),
+    //     .ex_reg_wr_en            ( ex_2_ex_mem_reg_wr_en      ),
+    //     .ex_reg_wr_addr          ( ex_2_ex_mem_reg_wr_addr    ),
+    //     .ex_reg_wr_data          ( ex_2_ex_mem_reg_wr_data    ),
 
-        .mem_reg_wr_en           ( ex_mem_2_mem_reg_wr_en     ),
-        .mem_reg_wr_addr         ( ex_mem_2_mem_reg_wr_addr   ),
-        .mem_reg_wr_data         ( ex_mem_2_mem_reg_wr_data   )
+    //     .mem_reg_wr_en           ( ex_mem_2_mem_reg_wr_en     ),
+    //     .mem_reg_wr_addr         ( ex_mem_2_mem_reg_wr_addr   ),
+    //     .mem_reg_wr_data         ( ex_mem_2_mem_reg_wr_data   )
+    // );
+
+    ex_mem  u_ex_mem (
+        .clk                     ( clk                         ),
+        .rst                     ( rst                         ),
+        .ex_reg_wr_en            ( ex_2_ex_mem_reg_wr_en       ),
+        .ex_reg_wr_addr          ( ex_2_ex_mem_reg_wr_addr     ),
+        .ex_reg_wr_data          ( ex_2_ex_mem_reg_wr_data     ),
+        .ex_hilo_wr_en           ( ex_2_ex_mem_hilo_wr_en      ),
+        .ex_hi_wr_data           ( ex_2_ex_mem_hi_wr_data      ),
+        .ex_lo_wr_data           ( ex_2_ex_mem_lo_wr_data      ),
+
+        .mem_reg_wr_en           ( ex_mem_2_mem_reg_wr_en      ),
+        .mem_reg_wr_addr         ( ex_mem_2_mem_reg_wr_addr    ),
+        .mem_reg_wr_data         ( ex_mem_2_mem_reg_wr_data    ),
+        .mem_hilo_wr_en          ( ex_mem_2_mem_hilo_wr_en     ),
+        .mem_hi_wr_data          ( ex_mem_2_mem_hi_wr_data     ),
+        .mem_lo_wr_data          ( ex_mem_2_mem_lo_wr_data     )
     );
 
     //mem
-    mem  u_mem (
-        .rst                     ( rst                          ),
-        .reg_wr_en_i             ( ex_mem_2_mem_reg_wr_en       ),
-        .reg_wr_addr_i           ( ex_mem_2_mem_reg_wr_addr     ),
-        .reg_wr_data_i           ( ex_mem_2_mem_reg_wr_data     ),
+    // mem  u_mem (
+    //     .rst                     ( rst                          ),
+    //     .reg_wr_en_i             ( ex_mem_2_mem_reg_wr_en       ),
+    //     .reg_wr_addr_i           ( ex_mem_2_mem_reg_wr_addr     ),
+    //     .reg_wr_data_i           ( ex_mem_2_mem_reg_wr_data     ),
 
-        .reg_wr_en_o             ( mem_2_mem_wb_reg_wr_en       ),
-        .reg_wr_addr_o           ( mem_2_mem_wb_reg_wr_addr     ),
-        .reg_wr_data_o           ( mem_2_mem_wb_reg_wr_data     )
+    //     .reg_wr_en_o             ( mem_2_mem_wb_reg_wr_en       ),
+    //     .reg_wr_addr_o           ( mem_2_mem_wb_reg_wr_addr     ),
+    //     .reg_wr_data_o           ( mem_2_mem_wb_reg_wr_data     )
+    // );
+
+    mem  u_mem (
+        .rst                     ( rst             ),
+        .reg_wr_en_i             ( ex_mem_2_mem_reg_wr_en    ),
+        .reg_wr_addr_i           ( ex_mem_2_mem_reg_wr_addr  ),
+        .reg_wr_data_i           ( ex_mem_2_mem_reg_wr_data  ),
+        .hilo_wr_en_i            ( ex_mem_2_mem_hilo_wr_en   ),
+        .hi_wr_data_i            ( ex_mem_2_mem_hi_wr_data   ),
+        .lo_wr_data_i            ( ex_mem_2_mem_lo_wr_data   ),
+
+        .reg_wr_en_o             ( mem_2_mem_wb_reg_wr_en     ),
+        .reg_wr_addr_o           ( mem_2_mem_wb_reg_wr_addr   ),
+        .reg_wr_data_o           ( mem_2_mem_wb_reg_wr_data   ),
+        .hilo_wr_en_o            ( mem_2_mem_wb_hilo_wr_en    ),
+        .hi_wr_data_o            ( mem_2_mem_wb_hi_wr_data    ),
+        .lo_wr_data_o            ( mem_2_mem_wb_lo_wr_data    )
     );
+
+    assign mem_bk2_ex_hilo_wr_en = mem_2_mem_wb_hilo_wr_en;
+    assign mem_bk2_ex_hi_wr_data = mem_2_mem_wb_hi_wr_data;
+    assign mem_bk2_ex_lo_wr_data = mem_2_mem_wb_lo_wr_data;
+
 
     ////////////////////////////////////////////////////////////////////////////
     //    write back                                               
     ////////////////////////////////////////////////////////////////////////////
  
     //mem_wb
+    // mem_wb  u_mem_wb (
+    //     .clk                     ( clk                        ),
+    //     .rst                     ( rst                        ),
+    //     .mem_reg_wr_en           ( mem_2_mem_wb_reg_wr_en     ),
+    //     .mem_reg_wr_addr         ( mem_2_mem_wb_reg_wr_addr   ),
+    //     .mem_reg_wr_data         ( mem_2_mem_wb_reg_wr_data   ),
+
+    //     .wb_reg_wr_en            ( wb_reg_wr_en               ),
+    //     .wb_reg_wr_addr          ( wb_reg_wr_addr             ),
+    //     .wb_reg_wr_data          ( wb_reg_wr_data             )
+    // );    
+
     mem_wb  u_mem_wb (
         .clk                     ( clk                        ),
         .rst                     ( rst                        ),
         .mem_reg_wr_en           ( mem_2_mem_wb_reg_wr_en     ),
         .mem_reg_wr_addr         ( mem_2_mem_wb_reg_wr_addr   ),
         .mem_reg_wr_data         ( mem_2_mem_wb_reg_wr_data   ),
+        .mem_hilo_wr_en          ( mem_2_mem_wb_hilo_wr_en    ),
+        .mem_hi_wr_data          ( mem_2_mem_wb_hi_wr_data    ),
+        .mem_lo_wr_data          ( mem_2_mem_wb_lo_wr_data    ),
 
         .wb_reg_wr_en            ( wb_reg_wr_en               ),
         .wb_reg_wr_addr          ( wb_reg_wr_addr             ),
-        .wb_reg_wr_data          ( wb_reg_wr_data             )
-    );    
+        .wb_reg_wr_data          ( wb_reg_wr_data             ),
+        .wb_hilo_wr_en           ( wb_hilo_wr_en              ),
+        .wb_hi_wr_data           ( wb_hi_wr_data              ),
+        .wb_lo_wr_data           ( wb_lo_wr_data              )
+    ); 
 
+    assign wb_reg_wr_en_o   = wb_reg_wr_en     ;   
+    assign wb_reg_wr_addr_o = wb_reg_wr_addr   ;
+    assign wb_reg_wr_data_o = wb_reg_wr_data   ;
 
-    assign wb_reg_wr_en_o   = wb_reg_wr_en    ;   
-    assign wb_reg_wr_addr_o = wb_reg_wr_addr  ;
-    assign wb_reg_wr_data_o = wb_reg_wr_data  ;
+    assign wb_bk2_ex_hilo_wr_en = wb_hilo_wr_en;
+    assign wb_bk2_ex_hi_wr_data = wb_hi_wr_data;
+    assign wb_bk2_ex_lo_wr_data = wb_lo_wr_data;
+
+    hilo_reg  u_hilo_reg (
+        .clk                     ( clk             ),
+        .rst                     ( rst             ),
+        .hilo_wr_en              ( wb_hilo_wr_en   ),
+        .hi_wr_data              ( wb_hi_wr_data   ),
+        .lo_wr_data              ( wb_lo_wr_data   ),
+
+        .hi_data                 ( hi_data         ),
+        .lo_data                 ( lo_data         )
+    );
+
 
 endmodule
